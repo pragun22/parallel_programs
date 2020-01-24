@@ -28,12 +28,12 @@ int main( int argc, char **argv ) {
         if(i==line.size()-1)
         {
             temp+=line[i];
-            m = stoi(temp);
+            m = stoll(temp);
         }
         else if(line[i]==' ' || line[i]=='\n')
         {
-            if(flag) {n = stoi(temp);flag=false;}
-            else m = stoi(temp);
+            if(flag) {n = stoll(temp);flag=false;}
+            else m = stoll(temp);
             temp = "";
         }
         else temp+=line[i];
@@ -50,11 +50,11 @@ int main( int argc, char **argv ) {
             if(i == line.size()-1)
             {
                 temp+=line[i];
-                a[ind++] = stoi(temp);
+                a[ind++] = stoll(temp);
             }
             else if(line[i]==' ' || line[i]=='\n')
             {
-                a[ind++] = stoi(temp);
+                a[ind++] = stoll(temp);
                 temp = "";
             }
             else temp+=line[i];
@@ -68,7 +68,7 @@ int main( int argc, char **argv ) {
         ed[m+i].w = a[2];
     }
     getline(f, line, ' ');
-    ll source = stoi(line);
+    ll source = stoll(line);
 
     MPI_Init( &argc, &argv );
 
@@ -107,7 +107,7 @@ int main( int argc, char **argv ) {
     
     ll rec_count = send_count;
  	MPI_Barrier( MPI_COMM_WORLD ); 
-    for (ll k = 0; k < n-1; ++k)
+    for (ll k = 0; k < n; ++k)
     {
 	    for (ll i = 0; i < rec_count; ++i)
 	    {
@@ -148,13 +148,15 @@ int main( int argc, char **argv ) {
     }
 
     if ( rank == 0 ) {
+    	ofstream myfile;
+    	myfile.open(argv[2]);
     	for(int i = 1 ; i <= n ; i++)
     	{
-    		cout<<i<<" "<<dist[i]<<endl;
+    		string temp = to_string(i) + " " + to_string(dist[i]) + "\n";
+    		myfile << temp;
     	}
+    	myfile.close();
     }
-
-    /* shut down MPI */
     MPI_Finalize();
     return 0;
 }

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <limits.h>
+#include <fstream>
 #include "mpi.h"
 using namespace std;
 typedef long long int ll;
@@ -46,14 +47,31 @@ void quicksort(ll* arr, ll start, ll end)
 
 int main( int argc, char **argv ) {
     int rank, numprocs;
-    // ll n = atoi(argv[1]);
-    // ll sz = n;
-    // ll arr[n+100000];
-    // for (ll i = 0; i < n; ++i)
-    // {
-    //     arr[i] = atoi(argv[i+2]);
-    // }
-    
+    string line;
+    ifstream f(argv[1]);
+    getline(f, line);
+    string temp = "";
+    ll cnt = 0;
+    for (int i = 0; i < line.size(); ++i)
+    {
+        if(i==line.size() || line[i] == ' ') cnt++;
+    }
+    ll* arr = (ll*)malloc(sizeof(ll)*cnt);
+    ll n = 0;
+    for (int i = 0; i < line.size(); ++i)
+    {
+        if(i==line.size()-1)
+        {
+            temp+=line[i];
+            arr[n++] = stoll(temp);
+        }
+        else if(line[i]==' ' || line[i]=='\n')
+        {
+            arr[n++] = stoll(temp);
+            temp = "";
+        }
+        else temp+=line[i];
+    }
     MPI_Init( &argc, &argv );
 
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -125,16 +143,18 @@ int main( int argc, char **argv ) {
         }
     }
     MPI_Barrier( MPI_COMM_WORLD );
-    double elapsedTime = MPI_Wtime() - tbeg;
-    double maxTime;
-    MPI_Reduce( &elapsedTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
     if ( rank == 0 ) {
-        printf( "Total time (s): %f\n", maxTime );
-        cout<<"Output array \n";
+
+        ofstream myfile;
+        myfile.open(argv[2]);
+
         for (ll i = 0; i < orig_n; ++i)
         {
-            cout<<final[i]<<" ";
-        }cout<<endl;
+            string temp = to_string(final[i]) + " ";
+            myfile << temp;
+        }
+        myfile << "\n";
+        myfile.close();
     }
     /* shut down MPI */
     MPI_Finalize();
