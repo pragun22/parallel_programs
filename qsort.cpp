@@ -46,22 +46,19 @@ void quicksort(ll* arr, ll start, ll end)
 
 int main( int argc, char **argv ) {
     int rank, numprocs;
-    /* start up MPI */
-    // ll n;cin>>n;
-    ll n = atoi(argv[1]);
-    ll sz = n;
-    ll arr[n+100000];
-    for (ll i = 0; i < n; ++i)
-    {
-        // cin>>arr[i];
-        arr[i] = atoi(argv[i+2]);
-    }
+    // ll n = atoi(argv[1]);
+    // ll sz = n;
+    // ll arr[n+100000];
+    // for (ll i = 0; i < n; ++i)
+    // {
+    //     arr[i] = atoi(argv[i+2]);
+    // }
+    
     MPI_Init( &argc, &argv );
 
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
-    
-    /*synchronize all processes*/
+
     MPI_Barrier( MPI_COMM_WORLD );
     double tbeg = MPI_Wtime();
     ll orig_n = n;
@@ -74,7 +71,6 @@ int main( int argc, char **argv ) {
         }
         n+=extra;
     }
-    /* write your code here */
     ll send_count = n / numprocs; 
     ll* recvbuf = (ll*)malloc(sizeof(ll) * send_count);
     MPI_Scatter(
@@ -89,15 +85,8 @@ int main( int argc, char **argv ) {
     );
     if(n < (rank+1)*send_count) send_count = n - rank*send_count;
     if(send_count < 0) send_count = 0;
-    // prllf("explain\n");
-    // cout<<rank<<" "<<send_count<<endl;    
     quicksort(recvbuf, 0, max(send_count-1,0LL));
 
-    // for (ll i = 0; i < send_count; ++i)
-    // {
-    //     cout<<recvbuf[i]<<" -- ";
-    // }cout<<endl;
-    
     ll* final = NULL;
     if(rank==0) final  = (ll*)malloc(sizeof(ll)*n);
     MPI_Gather(
@@ -112,7 +101,6 @@ int main( int argc, char **argv ) {
     );
     if(rank==0)
     {
-        // cout<<"HEY"<<endl;
         ll run = send_count;
         ll* temp = (ll*)malloc(sizeof(ll)*n);
         while(run < n)
@@ -120,23 +108,19 @@ int main( int argc, char **argv ) {
            ll i =0,j=0,k=0;
            while(i < run && j < send_count)
            {
-                if(final[i] <= final[j+run])
-                {
-                    temp[k++] = final[i];
-                    i++; 
-                }
+                if(final[i] <= final[j+run]) temp[k++] = final[i++];
                 else
                 {
                     temp[k++] = final[j+run];
                     j++;
-                }
+                } 
            }
            while(i<run) temp[k++] = final[i++];
            while(j<send_count) temp[k++] = final[j + run], j++;
            for (ll i = 0; i < k; ++i)
-            {
+           {
                 final[i] = temp[i];
-            } 
+           }
             run+=send_count;
         }
     }
@@ -152,7 +136,6 @@ int main( int argc, char **argv ) {
             cout<<final[i]<<" ";
         }cout<<endl;
     }
-
     /* shut down MPI */
     MPI_Finalize();
     return 0;
