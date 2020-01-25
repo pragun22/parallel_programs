@@ -18,7 +18,7 @@ void swap(ll *a, ll *b)
 }
 ll partition(ll* arr, ll start, ll end)
 {
-    srand(time(NULL));
+    // srand(time(NULL));
     ll ind = start + rand()%(end+1-start);
     ll pivot = arr[ind];
     swap(&arr[ind], &arr[end]);
@@ -48,6 +48,13 @@ void quicksort(ll* arr, ll start, ll end)
 int main( int argc, char **argv ) {
     int rank, numprocs;
     string line;
+    MPI_Init( &argc, &argv );
+
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
+
+    MPI_Barrier( MPI_COMM_WORLD );
+
     ifstream f(argv[1]);
     getline(f, line);
     string temp = "";
@@ -56,7 +63,8 @@ int main( int argc, char **argv ) {
     {
         if(i==line.size() || line[i] == ' ') cnt++;
     }
-    ll* arr = (ll*)malloc(sizeof(ll)*cnt);
+    ll extra = (numprocs - cnt%numprocs)%numprocs;
+    ll* arr = (ll*)malloc(sizeof(ll)*(cnt+extra));
     ll n = 0;
     for (int i = 0; i < line.size(); ++i)
     {
@@ -72,23 +80,16 @@ int main( int argc, char **argv ) {
         }
         else temp+=line[i];
     }
-    MPI_Init( &argc, &argv );
-
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
-
-    MPI_Barrier( MPI_COMM_WORLD );
-    double tbeg = MPI_Wtime();
     ll orig_n = n;
     if(n%numprocs != 0)
     {
-        ll extra = numprocs - n%numprocs;
         for (ll i = 0; i < extra; ++i)
         {
             arr[i+n] = LLONG_MAX;
         }
         n+=extra;
     }
+    double tbeg = MPI_Wtime();
     ll send_count = n / numprocs; 
     ll* recvbuf = (ll*)malloc(sizeof(ll) * send_count);
     MPI_Scatter(
@@ -143,8 +144,12 @@ int main( int argc, char **argv ) {
         }
     }
     MPI_Barrier( MPI_COMM_WORLD );
+    double elapsedTime = MPI_Wtime() - tbeg;
+    double maxTime;
+    MPI_Reduce( &elapsedTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
     if ( rank == 0 ) {
 
+        printf( "Total time (s): %f\n", maxTime );
         ofstream myfile;
         myfile.open(argv[2]);
 

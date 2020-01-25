@@ -146,12 +146,20 @@ int main( int argc, char **argv ) {
 	    	dist[i] = t_d[i];
 	    }
     }
-
+    MPI_Barrier( MPI_COMM_WORLD );
+    double elapsedTime = MPI_Wtime() - tbeg;
+    double maxTime;
+    MPI_Reduce( &elapsedTime, &maxTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+    
     if ( rank == 0 ) {
+        
+        printf( "Total time (s): %f\n", maxTime );
+
     	ofstream myfile;
     	myfile.open(argv[2]);
     	for(int i = 1 ; i <= n ; i++)
     	{
+            if(dist[i]==LLONG_MAX) dist[i] = -1;
     		string temp = to_string(i) + " " + to_string(dist[i]) + "\n";
     		myfile << temp;
     	}
